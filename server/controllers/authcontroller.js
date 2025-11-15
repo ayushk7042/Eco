@@ -33,25 +33,49 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
+// export const signup = async (req, res) => {
+//   try {
+//     const { name, email, password } = req.body;
+
+//     // Check if user already exists
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser)
+//       return res.status(400).json({ error: "Email already registered" });
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+
+//     const newUser = new User({ name, email, password: hashedPassword });
+//     await newUser.save();
+
+//     res.status(201).json({ message: "User registered successfully" });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// };
+
 export const signup = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser)
       return res.status(400).json({ error: "Email already registered" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = new User({ name, email, password: hashedPassword });
     await newUser.save();
 
-    res.status(201).json({ message: "User registered successfully" });
+    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.status(201).json({
+      message: "User registered successfully",
+      user: { name: newUser.name, email: newUser.email },
+      token,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+
 
 export const login = async (req, res) => {
   try {
